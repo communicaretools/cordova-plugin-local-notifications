@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.util.Random;
 
@@ -120,15 +121,48 @@ public class Builder {
         int ledColor  = options.getLedColor();
         NotificationCompat.Builder builder;
 
-        builder = new NotificationCompat.Builder(context)
-                .setDefaults(0)
-                .setContentTitle(options.getTitle())
-                .setContentText(options.getText())
-                .setNumber(options.getBadgeNumber())
-                .setTicker(options.getText())
-                .setAutoCancel(options.isAutoClear())
-                .setOngoing(options.isOngoing())
-                .setColor(options.getColor());
+        builder = new NotificationCompat.Builder(context);
+        builder.setStyle(new Notification.BigTextStyle(builder))
+            .bigText(options.getText())
+            .setBigContentTitle(options.getTitle());
+        builder
+            .setDefaults(0)
+            .setContentTitle(options.getTitle())
+            .setContentText(options.getText())
+            .setNumber(options.getBadgeNumber())
+            .setTicker(options.getText())
+            .setAutoCancel(options.isAutoClear())
+            .setOngoing(options.isOngoing())
+            .setColor(options.getColor());
+
+        //Set style
+        String style = options.getStyle();
+
+        if(style.equals("inbox")) {
+        NotificationCompat.InboxStyle notificationStyle = new NotificationCompat.InboxStyle();
+        JSONObject inbox = options.getInbox();
+        if(inbox != null) {
+             JSONArray lines = inbox.optJSONArray("lines");
+             String summary = inbox.optString("summary", "");
+             String title = inbox.optString("title", "");
+
+             if(title != null && title != "") {
+                 notificationStyle.setBigContentTitle(title);
+             }
+             if(summary != null && summary != "") {
+                 notificationStyle.setSummaryText(summary);
+             }
+             if(lines != null) {
+                 for( int i = 0; i < lines.length(); i++) {
+                     notificationStyle.addLine(lines.optString(i,""));
+                 }
+             }
+        }
+        builder.setStyle(notificationStyle);
+        }
+        else if (style.equals("bigtext")) {
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(options.getText()));
+        }
 
         if (ledColor != 0) {
             builder.setLights(ledColor, options.getLedOnTime(), options.getLedOffTime());
